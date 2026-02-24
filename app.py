@@ -459,6 +459,9 @@ HTML_PAGE = r"""
                     <p style="font-weight: 600;">클릭하여 엑셀 파일 선택</p>
                     <p style="font-size: 0.75rem; color: var(--slate-700); margin-top: 0.5rem;">목표 데이터(targets) 또는 실적 데이터(actuals) 벌크 업데이트</p>
                 </div>
+                <div style="margin-top: 1rem; text-align: center;">
+                    <a href="/api/download_example_target" style="font-size: 0.8rem; color: var(--primary); text-decoration: none; font-weight: 600;">📥 [예시] 목표 업로드 양식 다운로드</a>
+                </div>
                 <input type="file" id="excelFile" style="display: none;" onchange="handleFileUpload(this)">
             </div>
         </div>
@@ -907,6 +910,22 @@ def download():
 
     filename = f"{datetime.now().strftime('%Y%m%d_%H%M')}_마감취합_V5.zip"
     return send_file(memory_file, download_name=filename, as_attachment=True)
+
+@app.route('/api/download_example_target')
+def download_example_target():
+    data = []
+    for r in REGIONS_ORDER:
+        for c in CATEGORIES_ORDER:
+            data.append({"지역": r, "카테고리": c, "신규목표": 0, "해지목표": 0})
+    
+    example_df = pd.DataFrame(data)
+    
+    excel_file = io.BytesIO()
+    with pd.ExcelWriter(excel_file, engine='openpyxl') as writer:
+        example_df.to_excel(writer, index=False, sheet_name='목표업로드양식')
+    excel_file.seek(0)
+    
+    return send_file(excel_file, download_name="목표_업로드_양식_예시.xlsx", as_attachment=True)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001, debug=True)
